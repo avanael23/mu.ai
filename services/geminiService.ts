@@ -12,7 +12,7 @@ export const detectMode = (prompt: string): ModelMode => {
   const lower = prompt.toLowerCase();
 
   const reasoningKeywords = [
-
+    
     "dkl",
   ];
 
@@ -23,6 +23,9 @@ export const detectMode = (prompt: string): ModelMode => {
   return "search";
 };
 
+// small helper for delay
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 export const streamGeminiResponse = async (
   history: Content[],
   onChunk: (text: string) => void,
@@ -31,10 +34,11 @@ export const streamGeminiResponse = async (
   try {
     let mode = manualMode;
 
+    // auto-detect mode from last user message if not provided
     if (!mode) {
       const lastMsg = history[history.length - 1];
       if (lastMsg && lastMsg.role === "user") {
-        const textPart = lastMsg.parts.find((p: any) => p.text);
+        const textPart = (lastMsg.parts as any[]).find((p) => p.text);
         if (textPart && textPart.text) {
           mode = detectMode(textPart.text);
         }
@@ -43,7 +47,7 @@ export const streamGeminiResponse = async (
 
     if (!mode) mode = "search";
 
-    // Call Netlify function instead of Gemini directly
+    // 1) Call Netlify function ONCE
     const res = await fetch("/.netlify/functions/gemini", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -55,8 +59,17 @@ export const streamGeminiResponse = async (
     }
 
     const data = await res.json(); // { text }
-    if (data.text) {
-      onChunk(data.text); // push whole response as one chunk
+    const fullText: string = data.text || "";
+
+    // 2) "Fake stream" it in chunks to keep old UX & avoid freezing
+    const chunkSize = 50;      // characters per update (tune if needed)
+    const delayMs = 15;        // delay between chunks (tune if needed)
+
+    for (let i = 0; i < fullText.length; i += chunkSize) {
+      const chunk = fullText.slice(i, i + chunkSize);
+      onChunk(chunk);
+      // give React + browser time to breathe
+      await sleep(delayMs);
     }
   } catch (error) {
     console.error("Gemini API Error (frontend):", error);
