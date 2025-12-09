@@ -12,23 +12,8 @@ export const detectMode = (prompt: string): ModelMode => {
   const lower = prompt.toLowerCase();
 
   const reasoningKeywords = [
-    "solve",
-    "calculate",
-    "derive",
-    "proof",
-    "explain",
-    "analyze",
-    "code",
-    "program",
-    "function",
-    "algorithm",
-    "debug",
-    "why",
-    "how",
-    "plan",
-    "structure",
-    "compare",
-    "difference",
+
+    "dkl",
   ];
 
   if (reasoningKeywords.some((k) => lower.includes(k))) {
