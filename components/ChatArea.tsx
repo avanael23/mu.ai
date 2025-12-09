@@ -70,6 +70,8 @@ const WelcomeView: React.FC<{ loading: boolean }> = ({ loading }) => {
 
 export const ChatArea: React.FC<ChatAreaProps> = ({ history, streamingText, isStreaming, currentMode, authLoading }) => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    const [autoScroll, setAutoScroll] = useState(true);
 
     const scrollToBottom = () => {
         setTimeout(() => {
@@ -78,15 +80,34 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ history, streamingText, isSt
     };
 
     useEffect(() => {
-        scrollToBottom();
-    }, [history, streamingText, isStreaming]);
-
+        if (autoScroll) {
+            scrollToBottom();
+        }
+    }, [history, streamingText, isStreaming, autoScroll]);
     if ((history.length === 0 && !streamingText) || authLoading) {
         return <WelcomeView loading={authLoading} />;
     }
+const handleScroll = () => {
+        if (!containerRef.current) return;
 
+        const el = containerRef.current;
+        const { scrollTop, scrollHeight, clientHeight } = el;
+
+        const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
+
+        // If we are close to bottom, keep autoscroll
+        if (distanceFromBottom < 80) {
+            if (!autoScroll) setAutoScroll(true);
+        } else {
+            if (autoScroll) setAutoScroll(false);
+        }
+    };
     return (
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar relative">
+        <div
+            ref={containerRef}
+            onScroll={handleScroll}
+            className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar"
+        >
             <div className="max-w-4xl mx-auto space-y-6 pb-24">
                 {history.map((msg, idx) => (
                     <MessageBubble key={idx} role={msg.role} parts={msg.parts} />
