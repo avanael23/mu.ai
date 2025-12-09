@@ -17,7 +17,7 @@ export const detectMode = (prompt: string): ModelMode => {
   ];
 
   if (reasoningKeywords.some((k) => lower.includes(k))) {
-    return "reasoning";
+    return "search";
   }
 
   return "search";
