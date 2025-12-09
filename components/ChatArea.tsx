@@ -80,10 +80,11 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ history, streamingText, isSt
     };
 
     useEffect(() => {
-        if (autoScroll) {
-            scrollToBottom();
-        }
-    }, [history, streamingText, isStreaming, autoScroll]);
+  // Only auto-scroll when we're NOT streaming
+  if (!isStreaming) {
+    scrollToBottom();
+  }
+}, [history, isStreaming]);
     if ((history.length === 0 && !streamingText) || authLoading) {
         return <WelcomeView loading={authLoading} />;
     }
@@ -103,11 +104,7 @@ const handleScroll = () => {
         }
     };
     return (
-        <div
-            ref={containerRef}
-            onScroll={handleScroll}
-            className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar"
-        >
+  <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
             <div className="max-w-4xl mx-auto space-y-6 pb-24">
                 {history.map((msg, idx) => (
                     <MessageBubble key={idx} role={msg.role} parts={msg.parts} />
